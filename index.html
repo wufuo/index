@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我们的恋爱纪念册</title>
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CloudBase JS SDK -->
+  <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.11.0/cloudbase.js"></script>
+  <!-- 图标 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+  <style>
+    * {
+      scroll-behavior: smooth;
+    }
+    body {
+      background-color: #fef2f7;
+      font-family: "PingFang SC", sans-serif;
+    }
+    .card-shadow {
+      box-shadow: 0 4px 16px rgba(236,180,200,0.3);
+    }
+    .heart-animate {
+      animation: heartbeat 1.5s infinite;
+    }
+    @keyframes heartbeat {
+      0%,100% {transform: scale(1);}
+      50% {transform: scale(1.05);}
+    }
+    .fade-in {
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from {opacity:0; transform: translateY(10px);}
+      to {opacity:1; transform: translateY(0);}
+    }
+    .img-preview {
+      max-height:220px;
+      object-fit:cover;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+  <!-- 登录弹窗（无注册按钮） -->
+  <div id="loginModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-6 w-[90%] max-w-md fade-in">
+      <h2 class="text-xl text-pink-600 mb-4 text-center">情侣专属登录</h2>
+      <div class="space-y-3">
+        <input type="text" id="username" placeholder="账号" class="w-full border border-pink-200 rounded-lg px-3 py-2">
+        <input type="password" id="password" placeholder="密码" class="w-full border border-pink-200 rounded-lg px-3 py-2">
+        <div>
+          <button onclick="login()" class="w-full bg-pink-500 text-white py-2 rounded-lg">登录</button>
+        </div>
+        <p class="text-xs text-gray-400 text-center mt-2">仅情侣双人使用，不支持注册</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 顶部导航栏 -->
+  <header class="sticky top-0 bg-white/95 backdrop-blur-md z-40 border-b border-pink-100">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <h1 class="text-lg text-pink-700 flex items-center gap-2">
+        <i class="ri-heart-fill text-pink-500 heart-animate"></i>我们的恋爱小屋
+      </h1>
+      <div class="flex gap-4 text-sm">
+        <a href="#timer" class="text-gray-600 hover:text-pink-600">恋爱天数</a>
+        <a href="#todo" class="text-gray-600 hover:text-pink-600">100件小事</a>
+        <a href="#memory" class="text-gray-600 hover:text-pink-600">回忆相册</a>
+        <a href="#other" class="text-gray-600 hover:text-pink-600">心愿&纪念日</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 mt-6">
+    <!-- 模块1：恋爱天数计时器 -->
+    <section id="timer" class="bg-white rounded-2xl p-6 mb-8 card-shadow fade-in">
+      <h2 class="text-xl text-pink-700 mb-4">💖 在一起倒计时</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <div class="mb-3">
+            <label class="text-gray-600 text-sm">恋爱起始日期</label>
+            <input type="date" id="startDate" class="w-full border border-pink-200 rounded px-3 py-2 mt-1">
+          </div>
+          <div class="mb-3">
+            <label class="text-gray-600 text-sm">男生昵称</label>
+            <input type="text" id="boyName" class="w-full border border-pink-200 rounded px-3 py-2 mt-1">
+          </div>
+          <div class="mb-3">
+            <label class="text-gray-600 text-sm">女生昵称</label>
+            <input type="text" id="girlName" class="w-full border border-pink-200 rounded px-3 py-2 mt-1">
+          </div>
+          <button onclick="saveSetting()" class="w-full bg-pink-500 text-white py-2 rounded-lg">保存基础信息</button>
+        </div>
+        <div class="flex flex-col justify-center items-center">
+          <p id="coupleName" class="text-lg text-pink-600 mb-2">加载中...</p>
+          <p id="dayCount" class="text-3xl font-bold text-pink-700">0 天</p>
+          <p id="timeDetail" class="text-sm text-gray-500 mt-2">时:分:秒</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 模块2：情侣100件小事 -->
+    <section id="todo" class="bg-white rounded-2xl p-6 mb-8 card-shadow">
+      <h2 class="text-xl text-pink-700 mb-4">✅ 情侣100件小事</h2>
+      <div class="mb-5 p-4 bg-pink-50 rounded-xl">
+        <div class="grid md:grid-cols-2 gap-3 mb-3">
+          <input type="text" id="todoText" placeholder="输入要一起完成的小事" class="border border-pink-200 rounded px-3 py-2">
+          <input type="date" id="todoDate" class="border border-pink-200 rounded px-3 py-2">
+        </div>
+        <div class="mb-3">
+          <label class="text-sm text-gray-600">上传照片（可选）</label>
+          <input type="file" id="todoImg" accept="image/*" class="mt-1">
+        </div>
+        <div class="flex gap-2">
+          <button onclick="addTodo()" class="bg-pink-500 text-white px-4 py-2 rounded-lg">新增事项</button>
+          <button onclick="refreshTodo()" class="border border-pink-300 text-pink-600 px-4 py-2 rounded-lg">刷新列表</button>
+        </div>
+      </div>
+      <div id="todoList" class="grid md:grid-cols-2 gap-4">
+      </div>
+    </section>
+
+    <!-- 模块3：回忆相册&日记 -->
+    <section id="memory" class="bg-white rounded-2xl p-6 mb-8 card-shadow">
+      <h2 class="text-xl text-pink-700 mb-4">📸 恋爱回忆相册</h2>
+      <div class="mb-5 p-4 bg-pink-50 rounded-xl">
+        <input type="text" id="memTitle" placeholder="回忆标题" class="w-full border border-pink-200 rounded px-3 py-2 mb-3">
+        <textarea id="memContent" placeholder="写下甜蜜文字..." rows="3" class="w-full border border-pink-200 rounded px-3 py-2 mb-3"></textarea>
+        <div class="grid md:grid-cols-2 gap-3 mb-3">
+          <input type="date" id="memDate" class="border border-pink-200 rounded px-3 py-2">
+          <input type="file" id="memImg" accept="image/*" multiple class="border border-pink-200 rounded px-3 py-2">
+        </div>
+        <button onclick="addMemory()" class="bg-pink-500 text-white px-4 py-2 rounded-lg">保存这条回忆</button>
+      </div>
+      <div id="memoryList" class="grid md:grid-cols-2 gap-4">
+      </div>
+    </section>
+
+    <!-- 模块4：心愿清单+纪念日+留言板 -->
+    <section id="other" class="bg-white rounded-2xl p-6 card-shadow">
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- 心愿清单 -->
+        <div>
+          <h3 class="text-lg text-pink-700 mb-3">💌 心愿清单</h3>
+          <div class="flex gap-2 mb-3">
+            <input type="text" id="wishText" placeholder="许下心愿" class="flex-1 border border-pink-200 rounded px-2 py-1">
+            <button onclick="addWish()" class="bg-pink-400 text-white px-2 rounded">添加</button>
+          </div>
+          <div id="wishList" class="space-y-2 text-sm"></div>
+        </div>
+        <!-- 纪念日 -->
+        <div>
+          <h3 class="text-lg text-pink-700 mb-3">📅 纪念日</h3>
+          <div class="flex gap-2 mb-3">
+            <input type="text" id="annivText" placeholder="纪念日名称" class="flex-1 border border-pink-200 rounded px-2 py-1">
+            <input type="date" id="annivDate" class="border border-pink-200 rounded px-2 py-1 w-32">
+          </div>
+          <button onclick="addAnniversary()" class="w-full bg-pink-400 text-white py-1 rounded mb-3">新增纪念日</button>
+          <div id="annivList" class="space-y-2 text-sm"></div>
+        </div>
+        <!-- 留言板 -->
+        <div>
+          <h3 class="text-lg text-pink-700 mb-3">💬 甜蜜留言</h3>
+          <textarea id="msgText" placeholder="写下悄悄话..." rows="2" class="w-full border border-pink-200 rounded px-2 py-1 mb-2"></textarea>
+          <button onclick="addMessage()" class="w-full bg-pink-400 text-white py-1 rounded mb-3">提交留言</button>
+          <div id="msgList" class="space-y-2 text-sm max-h-40 overflow-y-auto"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 编辑弹窗 -->
+  <div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl p-6 w-[90%] max-w-md fade-in">
+      <h3 class="text-lg text-pink-700 mb-4">编辑内容</h3>
+      <div id="editBody"></div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeEdit()" class="flex-1 border border-gray-300 py-2 rounded">取消</button>
+        <button onclick="submitEdit()" class="flex-1 bg-pink-500 text-white py-2 rounded">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===================== 【在这里修改你的CloudBase配置和账号密码】====================
+const ENV_ID = "mobile-xx1314-d2gj9391uefd1ede3";
+// 你们专属账号密码，后面登录时输入这个
+const COUPLE_USER = {
+  username: "lovexx",
+  password: "261003"
+};
+// =================================================================================
+let app = cloudbase.init({ env: ENV_ID });
+let db = app.database();
+let storage = app.storage();
+let isLogin = false;
+let editType = "";
+let editId = "";
+
+// 登录校验（前端校验账号密码，没有注册入口）
+async function login() {
+  const u = document.getElementById("username").value.trim();
+  const p = document.getElementById("password").value.trim();
+  if(u === COUPLE_USER.username && p === COUPLE_USER.password){
+    isLogin = true;
+    document.getElementById("loginModal").classList.add("hidden");
+    loadAllData();
+    startTimer();
+  }else{
+    alert("账号或密码错误");
+  }
+}
+
+// 加载全部数据
+function loadAllData() {
+  loadSetting();
+  loadTodo();
+  loadMemory();
+  loadWish();
+  loadAnniversary();
+  loadMessage();
+}
+
+// 1.基础设置（昵称+起始日）
+async function saveSetting() {
+  const start = document.getElementById("startDate").value;
+  const boy = document.getElementById("boyName").value;
+  const girl = document.getElementById("girlName").value;
+  const res = await db.collection("Setting").limit(1).get();
+  if(res.data.length>0){
+    await db.collection("Setting").doc(res.data[0]._id).update({startDate:start,boyName:boy,girlName:girl});
+  }else{
+    await db.collection("Setting").add({startDate:start,boyName:boy,girlName:girl});
+  }
+  loadSetting();
+}
+async function loadSetting() {
+  const res = await db.collection("Setting").limit(1).get();
+  if(res.data.length>0){
+    const item = res.data[0];
+    document.getElementById("startDate").value = item.startDate || "";
+    document.getElementById("boyName").value = item.boyName || "";
+    document.getElementById("girlName").value = item.girlName || "";
+    document.getElementById("coupleName").innerText = `${item.boyName} ❤ ${item.girlName}`;
+  }
+}
+
+// 恋爱计时器
+function startTimer() {
+  setInterval(()=>{
+    const startStr = document.getElementById("startDate").value;
+    if (!startStr) return;
+    const start = new Date(startStr);
+    const now = new Date();
+    const diff = now - start;
+    const day = Math.floor(diff / 86400000);
+    const hour = Math.floor((diff % 86400000) / 3600000);
+    const min = Math.floor((diff % 3600000) / 60000);
+    const sec = Math.floor((diff % 60000) / 1000);
+    document.getElementById("dayCount").innerText = `${day} 天`;
+    document.getElementById("timeDetail").innerText = `${hour}时 ${min}分 ${sec}秒`;
+  }, 1000);
+}
+
+// 2.100件小事
+async function addTodo() {
+  const text = document.getElementById("todoText").value;
+  const doneDate = document.getElementById("todoDate").value;
+  const file = document.getElementById("todoImg").files[0];
+  let imgUrl = "";
+  if(file){
+    const upRes = await storage.uploadFile(`todo/${Date.now()}_${file.name}`, file);
+    imgUrl = await storage.getFileDownloadURL(upRes.fileID);
+  }
+  await db.collection("LoveTodo").add({text, doneDate, finished:false, imgUrl, createTime: new Date()});
+  document.getElementById("todoText").value = "";
+  document.getElementById("todoDate").value = "";
+  document.getElementById("todoImg").value = "";
+  loadTodo();
+}
+async function loadTodo() {
+  const listDom = document.getElementById("todoList");
+  listDom.innerHTML = "";
+  const {data} = await db.collection("LoveTodo").orderBy("createTime","desc").get();
+  data.forEach(item=>{
+    const html = `
+      <div class="border border-pink-100 rounded-xl p-4 bg-pink-50 fade-in">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" ${item.finished ? "checked" : ""} onchange="toggleTodo('${item._id}')">
+              <span class="${item.finished ? 'line-through text-gray-400' : ''}">${item.text}</span>
+            </label>
+          </div>
+          <div class="flex gap-1">
+            <button onclick="editTodo('${item._id}')" class="text-blue-500 text-sm">编辑</button>
+            <button onclick="deleteTodo('${item._id}')" class="text-red-500 text-sm">删除</button>
+          </div>
+        </div>
+        ${item.doneDate ? `<p class="text-xs text-gray-500">完成日期：${item.doneDate}</p>` : ""}
+        ${item.imgUrl ? `<img src="${item.imgUrl}" class="mt-2 rounded-lg img-preview w-full">` : ""}
+      </div>
+    `;
+    listDom.innerHTML += html;
+  })
+}
+async function toggleTodo(id) {
+  const doc = await db.collection("LoveTodo").doc(id).get();
+  await db.collection("LoveTodo").doc(id).update({finished: !doc.data[0].finished});
+  loadTodo();
+}
+async function editTodo(id) {
+  editType = "todo"; editId = id;
+  const {data} = await db.collection("LoveTodo").doc(id).get();
+  const item = data[0];
+  document.getElementById("editBody").innerHTML = `
+    <input type="text" id="editText" value="${item.text}" class="w-full border rounded px-3 py-2 mb-3">
+    <input type="date" id="editDate" value="${item.doneDate||""}" class="w-full border rounded px-3 py-2 mb-3">
+  `;
+  document.getElementById("editModal").classList.remove("hidden");
+}
+async function deleteTodo(id) {
+  if (!confirm("确定删除？")) return;
+  await db.collection("LoveTodo").doc(id).remove();
+  loadTodo();
+}
+function refreshTodo(){loadTodo();}
+
+// 3.回忆相册
+async function addMemory() {
+  const title = document.getElementById("memTitle").value;
+  const content = document.getElementById("memContent").value;
+  const memDate = document.getElementById("memDate").value;
+  const files = document.getElementById("memImg").files;
+  let imgList = [];
+  for(let i=0;i<files.length;i++){
+    const f = files[i];
+    const upRes = await storage.uploadFile(`memory/${Date.now()}_${f.name}`, f);
+    const url = await storage.getFileDownloadURL(upRes.fileID);
+    imgList.push(url);
+  }
+  await db.collection("Memory").add({title,content,memDate,imgList,createTime:new Date()});
+  document.getElementById("memTitle").value = "";
+  document.getElementById("memContent").value = "";
+  document.getElementById("memDate").value = "";
+  document.getElementById("memImg").value = "";
+  loadMemory();
+}
+async function loadMemory() {
+  const dom = document.getElementById("memoryList");
+  dom.innerHTML = "";
+  const {data} = await db.collection("Memory").orderBy("createTime","desc").get();
+  data.forEach(item=>{
+    let imgHtml = "";
+    (item.imgList||[]).forEach(url=>{
+      imgHtml += `<img src="${url}" class="rounded-lg img-preview w-full mb-2">`;
+    })
+    dom.innerHTML += `
+      <div class="border border-pink-100 rounded-xl p-4 bg-pink-50 fade-in">
+        <h4 class="font-medium text-pink-700">${item.title}</h4>
+        <p class="text-sm text-gray-600 my-2">${item.content}</p>
+        <p class="text-xs text-gray-500 mb-2">${item.memDate}</p>
+        ${imgHtml}
+        <div class="flex gap-2 mt-3">
+          <button onclick="editMemory('${item._id}')" class="text-blue-500 text-sm">编辑</button>
+          <button onclick="deleteMemory('${item._id}')" class="text-red-500 text-sm">删除</button>
+        </div>
+      </div>
+    `;
+  })
+}
+async function deleteMemory(id){
+  if(!confirm("删除这条回忆？")) return;
+  await db.collection("Memory").doc(id).remove();
+  loadMemory();
+}
+
+// 4.心愿、纪念日、留言
+async function addWish(){
+  const text = document.getElementById("wishText").value;
+  await db.collection("Wish").add({text,createTime:new Date()});
+  document.getElementById("wishText").value="";
+  loadWish();
+}
+async function loadWish(){
+  const dom = document.getElementById("wishList");
+  dom.innerHTML = "";
+  const {data} = await db.collection("Wish").get();
+  data.forEach(item=>{
+    dom.innerHTML += `
+      <div class="flex justify-between">
+        <span>• ${item.text}</span>
+        <button onclick="delWish('${item._id}')" class="text-red-400">×</button>
+      </div>
+    `;
+  })
+}
+async function delWish(id){
+  await db.collection("Wish").doc(id).remove(); loadWish();
+}
+
+async function addAnniversary(){
+  const text = document.getElementById("annivText").value;
+  const date = document.getElementById("annivDate").value;
+  await db.collection("Anniversary").add({text,date,createTime:new Date()});
+  loadAnniversary();
+}
+async function loadAnniversary(){
+  const dom = document.getElementById("annivList");
+  dom.innerHTML = "";
+  const {data} = await db.collection("Anniversary").get();
+  data.forEach(item=>{
+    dom.innerHTML += `
+      <div class="flex justify-between">
+        <span>${item.text} ${item.date}</span>
+        <button onclick="delAnniv('${item._id}')" class="text-red-400">×</button>
+      </div>
+    `;
+  })
+}
+async function delAnniv(id){
+  await db.collection("Anniversary").doc(id).remove(); loadAnniversary();
+}
+
+async function addMessage(){
+  const text = document.getElementById("msgText").value;
+  await db.collection("Message").add({text,createTime:new Date()});
+  document.getElementById("msgText").value="";
+  loadMessage();
+}
+async function loadMessage(){
+  const dom = document.getElementById("msgList");
+  dom.innerHTML = "";
+  const {data} = await db.collection("Message").orderBy("createTime","desc").get();
+  data.forEach(item=>{
+    dom.innerHTML += `
+      <div class="bg-pink-50 p-2 rounded">
+        <p>${item.text}</p>
+        <div class="text-right">
+          <button onclick="delMsg('${item._id}')" class="text-red-400 text-xs">删除</button>
+        </div>
+      </div>
+    `;
+  })
+}
+async function delMsg(id){
+  await db.collection("Message").doc(id).remove(); loadMessage();
+}
+
+// 编辑弹窗
+function closeEdit(){
+  document.getElementById("editModal").classList.add("hidden");
+}
+async function submitEdit(){
+  const text = document.getElementById("editText").value;
+  const date = document.getElementById("editDate").value;
+  if(editType==="todo"){
+    await db.collection("LoveTodo").doc(editId).update({text, doneDate:date});
+  }
+  closeEdit();
+  loadAllData();
+}
+</script>
+</body>
+</html>
